@@ -278,7 +278,8 @@ async def handle_xml_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     new_file = await context.bot.get_file(file_id)
 
     temp_dir = tempfile.mkdtemp()
-    file_path = os.path.join(temp_dir, file.file_name)
+    secure_random_file_name = os.urandom(16).hex()
+    file_path = os.path.join(temp_dir, secure_random_file_name + ".xml")
     await new_file.download_to_drive(custom_path=file_path)
 
     try:
