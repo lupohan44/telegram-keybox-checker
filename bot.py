@@ -61,6 +61,11 @@ async def load_from_url():
         async with session.get(url, headers=headers, params=params) as response:
             if response.status != 200:
                 raise Exception(f"Error fetching data: {response.status}")
+            try:
+                with open('status.json', 'w') as status_file:
+                    status_file.write(await response.text())
+            except Exception as e:
+                pass
             return await response.json()
 
 def parse_number_of_certificates(xml_file):
@@ -241,9 +246,17 @@ async def keybox_check_cli(keybox_path):
     # Validation of certificate revocation
     try:
         status_json = await load_from_url()
-    except Exception:
+    except Exception as e:
         result_text += "Failed to fetch Google's revoked keybox list.\n"
-        status_json = {'entries': {}}
+        result_text += f"Error: {e}\n"
+        result_text += "Using local status.json file.\n"
+        if not os.path.exists('status.json'):
+            result_text += "Local status.json file not found.\n"
+            result_text += "Please try again later.\n"
+            status_json = {'entries': {}}
+        else:
+            with open('status.json', 'r') as status_file:
+                status_json = json.load(status_file)
 
     status = status_json.get('entries', {}).get(serial_number_string, None)
     if status is None:
